@@ -1,1 +1,141 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriLedger Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen">
+    
+    <!-- Navbar -->
+    <nav class="bg-blue-900 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold tracking-wider">🎓 VeriLedger</h1>
+            <div class="space-x-4">
+                <button onclick="switchTab('issue')" class="hover:text-blue-200 transition">University (Issue)</button>
+                <button onclick="switchTab('verify')" class="hover:text-blue-200 transition">Employer (Verify)</button>
+                <button onclick="switchTab('ledger')" class="hover:text-blue-200 transition">View Ledger</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto mt-8 px-4 pb-12">
+        
+        <!-- KEY GENERATOR SECTION -->
+        <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-yellow-500 mb-8">
+            <h2 class="text-xl font-semibold mb-2">Key Management</h2>
+            <p class="text-sm text-gray-600 mb-4">Generate cryptographic keypairs to interact with the network.</p>
+            <button onclick="generateKeys()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded shadow transition">Generate New Keypair</button>
+            
+            <div id="keys-display" class="mt-4 grid grid-cols-2 gap-4 hidden">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700">Private Key (University keeps this secret)</label>
+                    <textarea id="gen-priv-key" class="w-full text-xs p-2 border rounded bg-gray-100 h-24" readonly></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700">Public Key (Everyone sees this)</label>
+                    <textarea id="gen-pub-key" class="w-full text-xs p-2 border rounded bg-gray-100 h-24" readonly></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: ISSUE CREDENTIAL -->
+        <div id="tab-issue" class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-600">
+            <h2 class="text-2xl font-bold mb-4 text-blue-900">University Portal: Issue Credential</h2>
+            <div class="grid grid-cols-2 gap-6">
+                <!-- Data Form -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium">Student ID</label>
+                        <input type="text" id="issue-id" class="w-full p-2 border rounded" placeholder="e.g. a2024cs10319">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Student Name</label>
+                        <input type="text" id="issue-name" class="w-full p-2 border rounded" placeholder="e.g. harsh">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Degree</label>
+                        <input type="text" id="issue-degree" class="w-full p-2 border rounded" placeholder="e.g. btech">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Graduation Year</label>
+                        <input type="number" id="issue-year" class="w-full p-2 border rounded" placeholder="2028">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-red-600">University Private Key (PEM)</label>
+                        <textarea id="issue-priv-key" class="w-full p-2 border rounded text-xs h-24 font-mono" placeholder="-----BEGIN PRIVATE KEY-----..."></textarea>
+                    </div>
+                    <button onclick="issueCredential()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">Cryptographically Sign & Anchor to Blockchain</button>
+                </div>
+                <!-- Result Box -->
+                <div class="bg-blue-50 p-4 rounded border border-blue-200">
+                    <h3 class="font-semibold text-blue-800 mb-2">Issuance Result</h3>
+                    <pre id="issue-result" class="text-xs text-wrap break-words bg-white p-2 rounded h-64 overflow-y-auto">Submit data to see signature...</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: VERIFY CREDENTIAL -->
+        <div id="tab-verify" class="hidden bg-white p-6 rounded-lg shadow-md border-t-4 border-green-600">
+            <h2 class="text-2xl font-bold mb-4 text-green-900">Employer Portal: Verify Credential</h2>
+            <div class="grid grid-cols-2 gap-6">
+                <!-- Data Form -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium">Presented Student ID</label>
+                        <input type="text" id="verify-id" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Presented Student Name</label>
+                        <input type="text" id="verify-name" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Presented Degree</label>
+                        <input type="text" id="verify-degree" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Presented Year</label>
+                        <input type="number" id="verify-year" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-purple-600">Blockchain Signature</label>
+                        <textarea id="verify-sig" class="w-full p-2 border rounded text-xs h-16 font-mono" placeholder="Base64 Signature String..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-blue-600">University Public Key (PEM)</label>
+                        <textarea id="verify-pub-key" class="w-full p-2 border rounded text-xs h-24 font-mono" placeholder="-----BEGIN PUBLIC KEY-----..."></textarea>
+                    </div>
+                    <button onclick="verifyCredential()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition">Verify Cryptography & Blockchain</button>
+                </div>
+                <!-- Result Box -->
+                <div class="bg-green-50 p-4 rounded border border-green-200 flex flex-col justify-center items-center text-center h-full min-h-[300px]">
+                    <h3 class="font-semibold text-gray-800 mb-2">Verification Status</h3>
+                    <div id="verify-result-icon" class="text-6xl mb-4">⏳</div>
+                    <p id="verify-result-text" class="text-lg font-medium text-gray-600">Awaiting input...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: LEDGER -->
+        <div id="tab-ledger" class="hidden bg-white p-6 rounded-lg shadow-md border-t-4 border-purple-600">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-purple-900">Immutable Ledger Explorer</h2>
+                <button onclick="fetchLedger()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition">Refresh Blockchain</button>
+            </div>
+            <div id="ledger-status" class="mb-4 text-sm font-bold"></div>
+            <div id="ledger-blocks" class="space-y-4">
+                <!-- Blocks will be injected here -->
+                <p class="text-gray-500 italic">Click Refresh to load blocks...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
