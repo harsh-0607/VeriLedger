@@ -1,6 +1,7 @@
 import hashlib
 import json
 import time
+import threading
 from typing import List, Dict
 
 class Block:
@@ -36,6 +37,7 @@ class Blockchain:
     def __init__(self, difficulty: int = 4):
         self.chain: List[Block] = []
         self.difficulty = difficulty
+        self.chain_lock = threading.Lock() 
         self.create_genesis_block()
 
     def create_genesis_block(self):
@@ -54,13 +56,14 @@ class Blockchain:
             block.hash = block.calculate_hash()
 
     def add_block(self, data: Dict) -> Block:
-        previous_block = self.get_latest_block()
-        new_block = Block(
-            index=previous_block.index + 1,
-            timestamp=time.time(),
-            data=data,
-            previous_hash=previous_block.hash
-        )
+         with self.chain_lock:
+             previous_block = self.get_latest_block()
+             new_block = Block(
+                 index=previous_block.index + 1,
+                 timestamp=time.time(),
+                 data=data,
+                 previous_hash=previous_block.hash
+             )
         self.mine_block(new_block)
         self.chain.append(new_block)
         return new_block
