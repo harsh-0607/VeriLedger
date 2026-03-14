@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+# --- Custom VeriLedger Security ---
+# Never upload private keys!
+*.pem
+*.key
+
+# Ignore local blockchain data files
+data/ledger.json
+
+# Environment variables (secrets)
+.env
