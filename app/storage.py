@@ -3,18 +3,22 @@ import os
 from .blockchain import Blockchain, Block
 
 CHAIN_FILE = "ledger.json"
+file_lock = threading.Lock()
 
 class Storage:
     @staticmethod
     def save_chain(blockchain: Blockchain):
-        with open(CHAIN_FILE, 'w') as f:
-            json.dump([block.to_dict() for block in blockchain.chain], f, indent=4)
+        with file_lock:
+            with open(CHAIN_FILE, 'w') as f:
+                json.dump([block.to_dict() for block in blockchain.chain], f, indent=4)
 
     @staticmethod
     def load_chain(blockchain: Blockchain):
-        if not os.path.exists(CHAIN_FILE):
-            Storage.save_chain(blockchain)
-            return
+        with file_lock:
+            if not os.path.exists(CHAIN_FILE):
+                 with open(CHAIN_FILE, 'w') as f:
+                    json.dump([block.to_dict() for block in blockchain.chain], f, indent=4)
+                return
 
         with open(CHAIN_FILE, 'r') as f:
             try:
