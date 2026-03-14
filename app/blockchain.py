@@ -64,9 +64,9 @@ class Blockchain:
                  data=data,
                  previous_hash=previous_block.hash
              )
-        self.mine_block(new_block)
-        self.chain.append(new_block)
-        return new_block
+             self.mine_block(new_block)
+             self.chain.append(new_block)
+             return new_block
 
     def is_chain_valid(self) -> bool:
         for i in range(1, len(self.chain)):
