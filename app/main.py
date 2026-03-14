@@ -31,7 +31,7 @@ def issue_credential(req: IssueRequest):
         signature = CryptoManager.sign_data(data_dict, req.private_key_pem.encode('utf-8'))
         
         # Package the ledger payload
-        data_bytes = json.dumps(data_dict, sort_keys=True).encode('utf-8')
+        data_bytes = json.dumps(data_dict, sort_keys=True, separators=(',', ':')).encode('utf-8')
         credential_hash = hashlib.sha256(data_bytes).hexdigest()
         
         # Package the ledger payload
@@ -71,7 +71,7 @@ def verify_credential(req: VerifyRequest):
 
     # Search ledger for the signature AND ensure the hash matches
     # First, calculate what the hash of the presented data should be
-    data_bytes = json.dumps(data_dict, sort_keys=True).encode('utf-8')
+    data_bytes = json.dumps(data_dict, sort_keys=True, separators=(',', ':')).encode('utf-8')
     expected_hash = hashlib.sha256(data_bytes).hexdigest()
     
     # Now find the block that contains this signature
@@ -79,7 +79,7 @@ def verify_credential(req: VerifyRequest):
     
     if not matching_block:
         return {"valid": False, "reason": "Credential signature not found on the immutable ledger."}
-        
+            
     if matching_block.data.get("credential_hash") != expected_hash:
         return {"valid": False, "reason": "Ledger mismatch: The data has been altered from what was originally anchored to the blockchain."}
 
