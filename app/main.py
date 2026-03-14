@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 import hashlib
 import json
-from fastapi import FastAPI, HTTPException
 from .models import IssueRequest, VerifyRequest
 from .crypto import CryptoManager
 from .blockchain import Blockchain
@@ -32,7 +31,7 @@ def issue_credential(req: IssueRequest):
         signature = CryptoManager.sign_data(data_dict, req.private_key_pem.encode('utf-8'))
         
         # Package the ledger payload
-         data_bytes = json.dumps(data_dict, sort_keys=True).encode('utf-8')
+        data_bytes = json.dumps(data_dict, sort_keys=True).encode('utf-8')
         credential_hash = hashlib.sha256(data_bytes).hexdigest()
         
         # Package the ledger payload
@@ -70,13 +69,21 @@ def verify_credential(req: VerifyRequest):
     if not blockchain.is_chain_valid():
         return {"valid": False, "reason": "Blockchain integrity compromised."}
 
-    # Search ledger for the signature to ensure it wasn't revoked/omitted
-    found = any(block.data.get("signature") == req.signature for block in blockchain.chain)
+    # Search ledger for the signature AND ensure the hash matches
+    # First, calculate what the hash of the presented data should be
+    data_bytes = json.dumps(data_dict, sort_keys=True).encode('utf-8')
+    expected_hash = hashlib.sha256(data_bytes).hexdigest()
     
-    if not found:
-        return {"valid": False, "reason": "Credential not found on the immutable ledger."}
+    # Now find the block that contains this signature
+    matching_block = next((block for block in blockchain.chain if block.data.get("signature") == req.signature), None)
+    
+    if not matching_block:
+        return {"valid": False, "reason": "Credential signature not found on the immutable ledger."}
+        
+    if matching_block.data.get("credential_hash") != expected_hash:
+        return {"valid": False, "reason": "Ledger mismatch: The data has been altered from what was originally anchored to the blockchain."}
 
-    return {"valid": True, "reason": "Credential is mathematically verified and present on the ledger."}
+    return {"valid": True, "reason": "Credential is mathematically verified and perfectly matches the ledger."}
 
 @app.get("/chain")
 def get_chain():
