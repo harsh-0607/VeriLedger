@@ -1,4 +1,5 @@
-
+import hashlib
+import json
 from fastapi import FastAPI, HTTPException
 from .models import IssueRequest, VerifyRequest
 from .crypto import CryptoManager
@@ -21,8 +22,12 @@ def issue_credential(req: IssueRequest):
         signature = CryptoManager.sign_data(data_dict, req.private_key_pem.encode('utf-8'))
         
         # Package the ledger payload
+         data_bytes = json.dumps(data_dict, sort_keys=True).encode('utf-8')
+        credential_hash = hashlib.sha256(data_bytes).hexdigest()
+        
+        # Package the ledger payload
         ledger_entry = {
-            "credential_hash": CryptoManager.sign_data(data_dict, req.private_key_pem.encode('utf-8')), # Double hashing prevents raw data leak
+            "credential_hash": credential_hash,
             "signature": signature
         }
         
