@@ -1,3 +1,5 @@
+from fastapi import FastAPI, HTTPException
+from contextlib import asynccontextmanager
 import hashlib
 import json
 from fastapi import FastAPI, HTTPException
@@ -6,12 +8,20 @@ from .crypto import CryptoManager
 from .blockchain import Blockchain
 from .storage import Storage
 
-app = FastAPI(title="VeriLedger API", description="Decentralized Credential Verification System")
 blockchain = Blockchain(difficulty=3)
 
-@app.on_event("startup")
-def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # This runs on startup
     Storage.load_chain(blockchain)
+    yield
+    # Anything after yield would run on shutdown
+
+app = FastAPI(
+    title="VeriLedger API", 
+    description="Decentralized Credential Verification System",
+    lifespan=lifespan
+)
 
 @app.post("/issue")
 def issue_credential(req: IssueRequest):
