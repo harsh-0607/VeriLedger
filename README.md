@@ -1,10 +1,4 @@
 # VeriLedger
-"A decentralized Python-based credential verification system using ECDSA signatures and an immutable blockchain ledger."     
-
-
-
-
-# VeriLedger
 
 A decentralized Python-based credential verification system using ECDSA signatures and an immutable blockchain ledger. Built with Python 3.12+ and FastAPI.
 
@@ -17,6 +11,14 @@ The system operates strictly on the principles of Decentralized Identity (DID), 
 3. **Verifier (Employer):** The employer receives the JSON data and the signature from the Holder. Using the API (`/verify`), the employer fetches the University's known Public Key, mathematically verifies the ECDSA signature, and queries the Immutable Ledger to ensure the credential hasn't been tampered with or revoked since issuance.
 
 Because of this architecture, **no central database** needs to be queried by the employer to view the private student records. The blockchain only stores cryptographic proofs (signatures/hashes), ensuring 100% GDPR compliance and data privacy while guaranteeing authenticity.
+
+## Architectural Limitations
+
+### Single-Node Storage (ledger.json)
+This project uses a local `ledger.json` file for persistent storage. This is perfectly suited for local development, portfolio demonstration, and running Uvicorn with a single worker.
+
+**Production Deployment Note:** 
+If you intend to deploy this system to cloud platforms (like AWS, Heroku, or Docker) using multiple workers (e.g., `uvicorn main:app --workers 4`), the `ledger.json` approach will face concurrency limitations. A simple `threading.Lock()` cannot prevent race conditions across separate multi-processing workers. For a true multi-node or multi-worker production environment, you must replace `app/storage.py` with a robust database (such as PostgreSQL or MongoDB) that handles concurrent ACID transactions natively.
 
 ## Getting Started
 
